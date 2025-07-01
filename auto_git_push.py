@@ -3,7 +3,7 @@ from datetime import datetime
 
 def git_commit_push():
     """현재 변경사항을 자동으로 커밋하고 푸시합니다."""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d")
 
     cmds = [
         ["git", "add", "."],
