@@ -8,7 +8,7 @@ def git_commit_push():
     cmds = [
         ["git", "add", "."],
         ["git", "commit", "-m", f"Updated: {timestamp}"],
-        ["git", "push", "origin", "main"]  # 브랜치를 master로 변경 (현재 브랜치에 맞춤)
+        ["git", "push", "origin", "main"]
     ]
 
     for cmd in cmds:
