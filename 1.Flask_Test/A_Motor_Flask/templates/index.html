@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinder Motor Control Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            grid-template-rows: 60px 1fr 80px;
+            grid-template-areas:
+                "header header"
+                "camera controls"
+                "footer footer";
+            height: 100vh;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        /* Header */
+        .header {
+            grid-area: header;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .status-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Camera Area */
+        .camera-container {
+            grid-area: camera;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .camera-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #1a1a1a;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .camera-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            grid-area: controls;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .controls-title {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* Direction Pad */
+        .direction-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            max-width: 240px;
+            margin: 0 auto;
+        }
+
+        .direction-btn {
+            width: 70px;
+            height: 70px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 2px solid transparent;
+        }
+
+        .direction-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .direction-btn:active,
+        .direction-btn.active {
+            background: rgba(74, 222, 128, 0.6);
+            border-color: #4ade80;
+            transform: scale(0.95);
+        }
+
+        .direction-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Button positions */
+        .btn-forward-left { grid-column: 1; grid-row: 1; }
+        .btn-forward { grid-column: 2; grid-row: 1; }
+        .btn-forward-right { grid-column: 3; grid-row: 1; }
+        .btn-rotate-left { grid-column: 1; grid-row: 2; }
+        .btn-stop { grid-column: 2; grid-row: 2; background: rgba(239, 68, 68, 0.6); }
+        .btn-rotate-right { grid-column: 3; grid-row: 2; }
+        .btn-backward-left { grid-column: 1; grid-row: 3; }
+        .btn-backward { grid-column: 2; grid-row: 3; }
+        .btn-backward-right { grid-column: 3; grid-row: 3; }
+
+        .btn-stop:hover {
+            background: rgba(239, 68, 68, 0.8);
+        }
+
+        /* 회전 아이콘 180도 회전 */
+        .btn-rotate-left,
+        .btn-rotate-right {
+            transform: rotate(180deg);
+        }
+
+        .btn-rotate-left:hover,
+        .btn-rotate-right:hover {
+            transform: rotate(180deg) scale(1.05);
+        }
+
+        .btn-rotate-left:active,
+        .btn-rotate-left.active,
+        .btn-rotate-right:active,
+        .btn-rotate-right.active {
+            transform: rotate(180deg) scale(0.95);
+        }
+
+        /* Speed Control */
+        .speed-control {
+            text-align: center;
+        }
+
+        .speed-label {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .speed-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4ade80;
+            cursor: pointer;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .speed-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4ade80;
+            cursor: pointer;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .speed-value {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #4ade80;
+        }
+
+        .speed-range {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Log Panel */
+        .log-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .log-header h4 {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .log-clear-btn {
+            background: rgba(239, 68, 68, 0.6);
+            border: none;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .log-clear-btn:hover {
+            background: rgba(239, 68, 68, 0.8);
+        }
+
+        .log-content {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 610px;
+            min-height: 600px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-item {
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            word-wrap: break-word;
+        }
+
+        .log-item.system {
+            background: rgba(59, 130, 246, 0.2);
+            border-left: 3px solid #3b82f6;
+        }
+
+        .log-item.command {
+            background: rgba(34, 197, 94, 0.2);
+            border-left: 3px solid #22c55e;
+        }
+
+        .log-item.warning {
+            background: rgba(245, 158, 11, 0.2);
+            border-left: 3px solid #f59e0b;
+        }
+
+        .log-item.error {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 3px solid #ef4444;
+        }
+
+        .log-timestamp {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+        }
+
+        /* Footer */
+        .footer {
+            grid-area: footer;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .keyboard-hints {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hint-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .key {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr 300px 80px;
+                grid-template-areas:
+                    "header"
+                    "camera"
+                    "controls"
+                    "footer";
+            }
+
+            .direction-pad {
+                max-width: 200px;
+            }
+
+            .direction-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 18px;
+            }
+        }
+    </style>
+    <!-- Socket.IO 클라이언트 라이브러리 -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🤖 Robot Control Dashboard</h1>
+            <div class="status-info">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>Connected</span>
+                </div>
+                <div class="status-item">
+                    <span>📶 WiFi: 85%</span>
+                </div>
+                <div class="status-item">
+                    <span>🔋 Battery: 78%</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Camera Feed -->
+        <div class="camera-container">
+            <div class="connection-status">📹 Camera Feed</div>
+            <!-- 실제 구현시에는 WebRTC 또는 MJPEG 스트림으로 교체 -->
+            <div class="camera-overlay">
+                <div class="camera-icon">📹</div>
+                <div>Camera Feed</div>
+                <div style="font-size: 12px; opacity: 0.7;">실시간 영상이 여기에 표시됩니다</div>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <h3 class="controls-title">Motor Control</h3>
+
+            <!-- Direction Pad -->
+            <div class="direction-pad">
+                <button class="direction-btn btn-forward-left" data-direction="forward-left" title="전진+좌회전">↖</button>
+                <button class="direction-btn btn-forward" data-direction="forward" title="전진">↑</button>
+                <button class="direction-btn btn-forward-right" data-direction="forward-right" title="전진+우회전">↗</button>
+
+                <button class="direction-btn btn-rotate-left" data-direction="rotate-left" title="제자리 좌회전">↺</button>
+                <button class="direction-btn btn-stop" data-direction="stop" title="정지">⏹</button>
+                <button class="direction-btn btn-rotate-right" data-direction="rotate-right" title="제자리 우회전">↻</button>
+
+                <button class="direction-btn btn-backward-left" data-direction="backward-left" title="후진+좌회전">↙</button>
+                <button class="direction-btn btn-backward" data-direction="backward" title="후진">↓</button>
+                <button class="direction-btn btn-backward-right" data-direction="backward-right" title="후진+우회전">↘</button>
+            </div>
+
+            <!-- Speed Control -->
+            <div class="speed-control">
+                <label class="speed-label">속도 조절</label>
+                <input type="range" class="speed-slider" id="speedSlider" min="20" max="100" value="60">
+                <div class="speed-value" id="speedValue">60%</div>
+                <div class="speed-range">
+                    <span>20%</span>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            <!-- Log Panel -->
+            <div class="log-panel">
+                <div class="log-header">
+                    <h4>Activity Log</h4>
+                    <button class="log-clear-btn" id="clearLogBtn">Clear</button>
+                </div>
+                <div class="log-content" id="logContent">
+                    <div class="log-item system">🚀 Robot Control Dashboard initialized</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="keyboard-hints">
+                <div class="hint-item">
+                    <span class="key">↑↓←→</span>
+                    <span>기본 조작</span>
+                </div>
+                <div class="hint-item">
+                    <span class="key">↑+←</span><span class="key">↑+→</span>
+                    <span>전진 대각선</span>
+                </div>
+                <div class="hint-item">
+                    <span class="key">↓+←</span><span class="key">↓+→</span>
+                    <span>후진 대각선</span>
+                </div>
+                <div class="hint-item">
+                    <span class="key">Space</span>
+                    <span>정지</span>
+                </div>
+                <div class="hint-item">
+                    <span class="key">+/-</span>
+                    <span>속도 조절</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        class RobotController {
+            constructor() {
+                this.currentSpeed = 60;
+                this.activeButtons = new Set();
+                this.pressedKeys = new Set();
+                this.keyPressOrder = []; // 키 누른 순서 추적
+                this.isConnected = false;
+                this.speedAdjustInterval = null;
+                this.speedAdjustDelay = 30; // 연속 조절 간격 (ms)
+                this.speedAdjustAcceleration = {
+                    initialDelay: 100, // 초기 간격 (ms)
+                    minDelay: 20,      // 최소 간격 (ms)
+                    acceleration: 0.9,  // 가속 비율 (낮을수록 빨라짐)
+                    currentDelay: 100
+                }
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.setupSpeedControl();
+                this.setupSocketConnection();
+                this.setupLogPanel();
+
+                // 초기 연결 시뮬레이션
+                setTimeout(() => {
+                    this.isConnected = true;
+                    this.addLog('🤖 Robot connected successfully!', 'system');
+                }, 1000);
+            }
+
+            setupEventListeners() {
+                // 마우스 이벤트
+                document.querySelectorAll('.direction-btn').forEach(btn => {
+                    btn.addEventListener('mousedown', (e) => this.handleButtonPress(e.target));
+                    btn.addEventListener('mouseup', (e) => this.handleButtonRelease(e.target));
+                    btn.addEventListener('mouseleave', (e) => this.handleButtonRelease(e.target));
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.handleButtonPress(e.target);
+                    });
+                    btn.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        this.handleButtonRelease(e.target);
+                    });
+                });
+
+                // 키보드 이벤트
+                document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+
+                // 포커스 유지
+                document.addEventListener('click', () => document.body.focus());
+                document.body.tabIndex = 0;
+            }
+
+            setupSpeedControl() {
+                const speedSlider = document.getElementById('speedSlider');
+                const speedValue = document.getElementById('speedValue');
+
+                speedSlider.addEventListener('input', (e) => {
+                    this.currentSpeed = parseInt(e.target.value);
+                    speedValue.textContent = `${this.currentSpeed}%`;
+
+                    // 서버에 속도 변경 알림
+                    if (this.socket) {
+                        this.socket.emit('set_speed', { speed: this.currentSpeed });
+                    }
+
+                    // 현재 이동 중이면 속도 업데이트
+                    if (this.activeButtons.size > 0) {
+                        this.updateMotorCommand();
+                    }
+                });
+            }
+
+            setupSocketConnection() {
+                // Socket.IO 연결
+                this.socket = io();
+
+                // 연결 이벤트
+                this.socket.on('connect', () => {
+                    this.addLog('🔌 Socket connected to server', 'system');
+                    this.isConnected = true;
+                });
+
+                this.socket.on('disconnect', () => {
+                    this.addLog('🔌 Socket disconnected from server', 'warning');
+                    this.isConnected = false;
+                });
+
+                // 서버 응답 이벤트
+                this.socket.on('connection_status', (data) => {
+                    this.isConnected = data.connected;
+                    this.addLog(`📡 ${data.message}`, data.connected ? 'system' : 'warning');
+                });
+
+                this.socket.on('robot_status', (data) => {
+                    this.currentSpeed = data.speed;
+                    document.getElementById('speedSlider').value = data.speed;
+                    document.getElementById('speedValue').textContent = `${data.speed}%`;
+                    this.addLog(`🤖 Robot status: ${data.direction} at ${data.speed}%`, 'system');
+                });
+
+                this.socket.on('motor_feedback', (data) => {
+                    if (data.success) {
+                        this.addLog(`✅ Motor: ${data.direction} (${data.speed}%)`, 'command');
+                    } else {
+                        this.addLog(`❌ Motor command failed: ${data.direction}`, 'error');
+                    }
+                });
+
+                this.socket.on('speed_updated', (data) => {
+                    this.addLog(`⚡ Speed updated: ${data.speed}%`, 'system');
+                });
+
+                this.socket.on('distance_update', (data) => {
+                    this.addLog(`📏 Distance: ${data.distance.toFixed(1)}cm`, 'system');
+                });
+
+                this.socket.on('camera_frame', (data) => {
+                    // 카메라 프레임 업데이트
+                    const cameraFeed = document.querySelector('.camera-feed');
+                    const cameraOverlay = document.querySelector('.camera-overlay');
+
+                    if (cameraFeed && data.image) {
+                        if (!cameraFeed.src) {
+                            // 처음 카메라 프레임이 오면 overlay 숨기기
+                            if (cameraOverlay) cameraOverlay.style.display = 'none';
+
+                            // img 태그 생성
+                            const img = document.createElement('img');
+                            img.className = 'camera-feed';
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.objectFit = 'cover';
+                            cameraFeed.parentNode.appendChild(img);
+                        }
+
+                        const img = document.querySelector('img.camera-feed');
+                        if (img) {
+                            img.src = `data:image/jpeg;base64,${data.image}`;
+                        }
+                    }
+                });
+
+                this.socket.on('emergency_stop_confirmed', (data) => {
+                    this.addLog('🚨 Emergency stop executed!', 'error');
+                });
+
+                this.addLog('🔌 Socket connection initialized', 'system');
+            }
+
+            setupLogPanel() {
+                const clearBtn = document.getElementById('clearLogBtn');
+                clearBtn.addEventListener('click', () => {
+                    this.clearLog();
+                });
+            }
+
+            handleButtonPress(button) {
+                const direction = button.dataset.direction;
+                if (!direction || this.activeButtons.has(direction)) return;
+
+                this.activeButtons.add(direction);
+                button.classList.add('active');
+                this.sendMotorCommand(direction);
+
+                this.addLog(`🎮 Button pressed: ${direction} at ${this.currentSpeed}% speed`, 'command');
+            }
+
+            handleButtonRelease(button) {
+                const direction = button.dataset.direction;
+                if (!direction || !this.activeButtons.has(direction)) return;
+
+                this.activeButtons.delete(direction);
+                button.classList.remove('active');
+
+                if (this.activeButtons.size === 0) {
+                    this.sendMotorCommand('stop');
+                } else {
+                    this.updateMotorCommand();
+                }
+
+                this.addLog(`🎮 Button released: ${direction}`, 'command');
+            }
+
+            handleKeyDown(e) {
+                // 속도 조절 키 처리
+                if (e.key === '+' || e.key === '=') {
+                    this.startSpeedAdjustment(1);
+                    e.preventDefault();
+                    return;
+                } else if (e.key === '-') {
+                    this.startSpeedAdjustment(-1);
+                    e.preventDefault();
+                    return;
+                }
+
+                // 방향키가 아니면 무시
+                if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) return;
+
+                // 이미 눌린 키면 무시
+                if (this.pressedKeys.has(e.code)) return;
+
+                this.pressedKeys.add(e.code);
+                this.keyPressOrder.push(e.code);
+
+                this.updateDirectionFromKeys();
+                e.preventDefault();
+            }
+
+            handleKeyUp(e) {
+                // 속도 조절 키를 뗐을 때 연속 조절 중지
+                if (e.key === '+' || e.key === '=' || e.key === '-') {
+                    this.stopSpeedAdjustment();
+                    return;
+                }
+
+                // 방향키가 아니면 무시
+                if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) return;
+
+                this.pressedKeys.delete(e.code);
+                this.keyPressOrder = this.keyPressOrder.filter(key => key !== e.code);
+
+                this.updateDirectionFromKeys();
+            }
+
+            updateDirectionFromKeys() {
+                const newDirection = this.getDirectionFromKeys();
+                const currentDirection = Array.from(this.activeButtons)[0] || null;
+
+                // 방향이 바뀌면 이전 버튼 해제
+                if (currentDirection && currentDirection !== newDirection) {
+                    const oldButton = document.querySelector(`[data-direction="${currentDirection}"]`);
+                    if (oldButton) this.handleButtonRelease(oldButton);
+                }
+
+                // 새 방향이 있으면 버튼 누르기
+                if (newDirection && newDirection !== currentDirection) {
+                    const newButton = document.querySelector(`[data-direction="${newDirection}"]`);
+                    if (newButton) this.handleButtonPress(newButton);
+                }
+            }
+
+            getDirectionFromKeys() {
+                const up = this.pressedKeys.has('ArrowUp');
+                const down = this.pressedKeys.has('ArrowDown');
+                const left = this.pressedKeys.has('ArrowLeft');
+                const right = this.pressedKeys.has('ArrowRight');
+                const stop = this.pressedKeys.has('Space');
+
+                if (stop) return 'stop';
+
+                // 가장 최근에 눌린 키를 기준으로 우선순위 결정
+                const lastKey = this.keyPressOrder[this.keyPressOrder.length - 1];
+
+                // 8방향 조합 (대각선 이동) - 마지막 키 기준
+                if (up && left) {
+                    return lastKey === 'ArrowUp' ? 'forward-left' : 'forward-left';
+                }
+                if (up && right) {
+                    return lastKey === 'ArrowUp' ? 'forward-right' : 'forward-right';
+                }
+                if (down && left) {
+                    return lastKey === 'ArrowDown' ? 'backward-left' : 'backward-left';
+                }
+                if (down && right) {
+                    return lastKey === 'ArrowDown' ? 'backward-right' : 'backward-right';
+                }
+
+                // 단일 방향 - 마지막에 누른 키 우선
+                if (lastKey === 'ArrowUp' && up) return 'forward';
+                if (lastKey === 'ArrowDown' && down) return 'backward';
+                if (lastKey === 'ArrowLeft' && left) return 'rotate-left';
+                if (lastKey === 'ArrowRight' && right) return 'rotate-right';
+
+                // 마지막 키가 없거나 해당하지 않으면 기본 순서
+                if (up) return 'forward';
+                if (down) return 'backward';
+                if (left) return 'rotate-left';
+                if (right) return 'rotate-right';
+
+                return null;
+            }
+
+            adjustSpeed(delta) {
+                const newSpeed = Math.max(20, Math.min(100, this.currentSpeed + delta));
+                document.getElementById('speedSlider').value = newSpeed;
+                document.getElementById('speedSlider').dispatchEvent(new Event('input'));
+            }
+
+            startSpeedAdjustment(delta) {
+                // 이미 조절 중이면 중지
+                if (this.speedAdjustInterval) {
+                    this.stopSpeedAdjustment();
+                }
+
+                // 가속도 초기화
+                this.speedAdjustAcceleration.currentDelay = this.speedAdjustAcceleration.initialDelay;
+
+                // 즉시 한 번 실행
+                this.adjustSpeed(delta);
+
+                // 가속되는 연속 조절 시작
+                this.scheduleNextSpeedAdjust(delta);
+            }
+
+            scheduleNextSpeedAdjust(delta) {
+                this.speedAdjustInterval = setTimeout(() => {
+                    this.adjustSpeed(delta);
+
+                    // 간격을 점점 줄여서 가속
+                    this.speedAdjustAcceleration.currentDelay = Math.max(
+                        this.speedAdjustAcceleration.minDelay,
+                        this.speedAdjustAcceleration.currentDelay * this.speedAdjustAcceleration.acceleration
+                    );
+
+                    // 다음 조절 예약
+                    this.scheduleNextSpeedAdjust(delta);
+                }, this.speedAdjustAcceleration.currentDelay);
+            }
+
+            stopSpeedAdjustment() {
+                if (this.speedAdjustInterval) {
+                    clearTimeout(this.speedAdjustInterval);
+                    this.speedAdjustInterval = null;
+                }
+                // 가속도 초기화
+                this.speedAdjustAcceleration.currentDelay = this.speedAdjustAcceleration.initialDelay;
+            }
+
+            updateMotorCommand() {
+                if (this.activeButtons.size > 0) {
+                    const direction = Array.from(this.activeButtons)[0];
+                    this.sendMotorCommand(direction);
+                }
+            }
+
+            sendMotorCommand(direction) {
+                if (!this.isConnected) {
+                    this.addLog('🚫 Robot not connected', 'warning');
+                    return;
+                }
+
+                const command = {
+                    direction: direction,
+                    speed: this.currentSpeed,
+                    timestamp: Date.now()
+                };
+
+                // Socket.IO로 모터 제어 명령 전송
+                if (this.socket) {
+                    this.socket.emit('motor_control', command);
+                    this.addLog(`📡 Sent: ${direction} (${this.currentSpeed}%)`, 'command');
+                } else {
+                    this.addLog('🚫 Socket not available', 'error');
+                }
+
+                // 시각적 피드백
+                this.showCommandFeedback(direction);
+            }
+
+            showCommandFeedback(direction) {
+                // 간단한 시각적 피드백
+                const directionNames = {
+                    'forward': '⬆️ 전진',
+                    'backward': '⬇️ 후진',
+                    'forward-left': '↖️ 전진+좌회전',
+                    'forward-right': '↗️ 전진+우회전',
+                    'backward-left': '↙️ 후진+좌회전',
+                    'backward-right': '↘️ 후진+우회전',
+                    'rotate-left': '↺ 제자리 좌회전',
+                    'rotate-right': '↻ 제자리 우회전',
+                    'stop': '⏹️ 정지'
+                };
+
+                // 로그에는 표시하지 않음 (너무 많은 메시지 방지)
+            }
+
+            addLog(message, type = 'system') {
+                const logContent = document.getElementById('logContent');
+                const logItem = document.createElement('div');
+                logItem.className = `log-item ${type}`;
+
+                const timestamp = new Date().toLocaleTimeString();
+                logItem.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span> ${message}
+                `;
+
+                logContent.appendChild(logItem);
+
+                // 자동 스크롤 (최신 로그가 보이도록)
+                logContent.scrollTop = logContent.scrollHeight;
+
+                // 로그가 너무 많으면 오래된 것 제거 (최대 100개)
+                const logItems = logContent.querySelectorAll('.log-item');
+                if (logItems.length > 100) {
+                    logItems[0].remove();
+                }
+            }
+
+            clearLog() {
+                const logContent = document.getElementById('logContent');
+                logContent.innerHTML = '';
+                this.addLog('📝 Log cleared', 'system');
+            }
+        }
+
+        // 앱 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            const controller = new RobotController();
+
+            // 글로벌 객체로 접근 가능하게 설정 (디버깅용)
+            window.robotController = controller;
+
+            setTimeout(() => {
+                controller.addLog('📖 사용법:', 'system');
+                controller.addLog('   - 마우스: 버튼 클릭으로 조작', 'system');
+                controller.addLog('   - 키보드: 화살표키, Space(정지), +/-(속도)', 'system');
+                controller.addLog('   - F1: 거리 모니터링 시작/중지', 'system');
+                controller.addLog('   - F2: 카메라 시작/중지', 'system');
+            }, 100);
+
+            // 추가 키보드 단축키
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F1') {
+                    e.preventDefault();
+                    if (controller.socket) {
+                        if (controller.distanceMonitoring) {
+                            controller.socket.emit('stop_distance_monitoring');
+                            controller.distanceMonitoring = false;
+                            controller.addLog('📏 Distance monitoring stopped', 'system');
+                        } else {
+                            controller.socket.emit('start_distance_monitoring');
+                            controller.distanceMonitoring = true;
+                            controller.addLog('📏 Distance monitoring started', 'system');
+                        }
+                    }
+                } else if (e.key === 'F2') {
+                    e.preventDefault();
+                    if (controller.socket) {
+                        if (controller.cameraActive) {
+                            controller.socket.emit('stop_camera');
+                            controller.cameraActive = false;
+                            controller.addLog('📹 Camera stopped', 'system');
+                        } else {
+                            controller.socket.emit('start_camera');
+                            controller.cameraActive = true;
+                            controller.addLog('📹 Camera started', 'system');
+                        }
+                    }
+                }
+            });
+
+            // 거리 모니터링 및 카메라 상태 초기화
+            controller.distanceMonitoring = false;
+            controller.cameraActive = false;
+        });
+
+        // 페이지 언로드시 정리
+        window.addEventListener('beforeunload', () => {
+            if (window.robotController) {
+                window.robotController.sendMotorCommand('stop');
+                window.robotController.stopSpeedAdjustment();
+            }
+        });
+    </script>
+</body>
+</html>
