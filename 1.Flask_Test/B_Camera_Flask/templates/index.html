@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Findee 카메라 모니터</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 300;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1em;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .video-section {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .video-container {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .video-stream {
+            width: 100%;
+            height: auto;
+            min-height: 300px;
+            max-height: 600px;
+            object-fit: contain;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: #000;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+
+        .resolution-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .resolution-select {
+            min-width: 150px;
+            text-transform: none;
+            font-size: 13px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .resolution-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        .resolution-select option {
+            background: #2d3748;
+            color: white;
+            padding: 8px;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-panel h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 500;
+        }
+
+        .system-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .info-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .component-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .component-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .component-card.active {
+            background: rgba(74, 222, 128, 0.2);
+            border-color: #4ade80;
+        }
+
+        .component-card.inactive {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: #ef4444;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .status-bar {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .controls {
+                justify-content: center;
+            }
+
+            .video-container {
+                max-width: 100%;
+                padding: 5px;
+            }
+
+            .video-stream {
+                min-height: 200px;
+                max-height: 400px;
+            }
+
+            .resolution-control {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .resolution-select {
+                min-width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 Findee 카메라 모니터</h1>
+            <p>picamera2 + Flask 실시간 스트리밍</p>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+            <div class="status-item">
+                <div class="status-dot" id="connectionDot"></div>
+                <span id="connectionStatus">연결 확인 중...</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot" id="cameraDot"></div>
+                <span id="cameraStatus">카메라 확인 중...</span>
+            </div>
+            <div class="status-item">
+                <span>FPS: <strong id="fpsDisplay">--</strong></span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <h2 style="margin-top: 0; color: #fff;">📹 실시간 카메라 스트림</h2>
+                <div class="video-container">
+                    <img src="/video_feed" class="video-stream" alt="카메라 스트림" id="videoStream">
+                </div>
+
+                <div class="controls">
+                    <div class="resolution-control">
+                        <select id="resolutionSelect" class="btn resolution-select">
+                            <option value="">해상도 로딩중...</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="changeResolution()">
+                            📐 해상도 적용
+                        </button>
+                    </div>
+                    <button class="btn btn-success" onclick="refreshStream()">
+                        🔄 새로고침
+                    </button>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h2>📊 시스템 정보</h2>
+                <div class="system-info" id="systemInfo">
+                    <div class="info-card">
+                        <h3>로딩 중...</h3>
+                        <div class="loading"></div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 20px 0 10px 0;">🔧 컴포넌트 상태</h3>
+                <div class="component-status" id="componentStatus">
+                    <div class="component-card">
+                        <div>카메라</div>
+                        <div class="loading"></div>
+                    </div>
+                    <div class="component-card">
+                        <div>모터</div>
+                        <div class="loading"></div>
+                    </div>
+                    <div class="component-card">
+                        <div>초음파</div>
+                        <div class="loading"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>⚡ <strong>Findee Kit 카메라 스트리밍</strong> - picamera2 + OpenCV 최적화</p>
+            <p>🌐 같은 네트워크의 모든 기기에서 접속 가능</p>
+        </div>
+    </div>
+
+    <script>
+        let updateInterval = null;
+
+        // 시스템 정보 업데이트
+        function updateSystemInfo() {
+            fetch('/api/system_info')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        updateConnectionStatus(false, data.error);
+                        return;
+                    }
+
+                    // 연결 상태 업데이트
+                    updateConnectionStatus(true);
+
+                    // 카메라 상태 업데이트
+                    updateCameraStatus(data.camera_status);
+
+                    // FPS 업데이트
+                    document.getElementById('fpsDisplay').textContent = data.fps || 0;
+
+                    // 시스템 정보 업데이트
+                    const systemInfo = document.getElementById('systemInfo');
+                    systemInfo.innerHTML = `
+                        <div class="info-card">
+                            <h3>CPU 사용률</h3>
+                            <div class="info-value">${(data.cpu_percent || 0).toFixed(1)}%</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>메모리 사용률</h3>
+                            <div class="info-value">${(data.memory_percent || 0).toFixed(1)}%</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>CPU 온도</h3>
+                            <div class="info-value">${(data.cpu_temperature || 0).toFixed(1)}°C</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>현재 해상도</h3>
+                            <div class="info-value" style="font-size: 1.2em;">${data.current_resolution || 'Unknown'}</div>
+                        </div>
+                        <div class="info-card">
+                            <h3>IP 주소</h3>
+                            <div class="info-value" style="font-size: 1em;">${data.hostname || 'Unknown'}</div>
+                        </div>
+                    `;
+
+                    // 현재 해상도를 드롭다운에 반영
+                    const select = document.getElementById('resolutionSelect');
+                    if (select && data.current_resolution) {
+                        select.value = data.current_resolution;
+                    }
+
+                    // 컴포넌트 상태 업데이트
+                    updateComponentStatus({
+                        camera: data.camera_status,
+                        motor: data.motor_status,
+                        ultrasonic: data.ultrasonic_status
+                    });
+                })
+                .catch(error => {
+                    console.error('시스템 정보 로드 실패:', error);
+                    updateConnectionStatus(false, '연결 실패');
+                });
+        }
+
+        function updateConnectionStatus(isConnected, errorMsg = '') {
+            const dot = document.getElementById('connectionDot');
+            const status = document.getElementById('connectionStatus');
+
+            if (isConnected) {
+                dot.className = 'status-dot';
+                status.textContent = '서버 연결됨';
+            } else {
+                dot.className = 'status-dot offline';
+                status.textContent = errorMsg || '서버 연결 실패';
+            }
+        }
+
+        function updateCameraStatus(isActive) {
+            const dot = document.getElementById('cameraDot');
+            const status = document.getElementById('cameraStatus');
+
+            if (isActive) {
+                dot.className = 'status-dot';
+                status.textContent = '카메라 활성';
+            } else {
+                dot.className = 'status-dot offline';
+                status.textContent = '카메라 비활성';
+            }
+        }
+
+        function updateComponentStatus(components) {
+            const container = document.getElementById('componentStatus');
+            container.innerHTML = '';
+
+            Object.entries(components).forEach(([name, isActive]) => {
+                const card = document.createElement('div');
+                card.className = `component-card ${isActive ? 'active' : 'inactive'}`;
+
+                const displayName = {
+                    camera: '카메라',
+                    motor: '모터',
+                    ultrasonic: '초음파'
+                }[name] || name;
+
+                card.innerHTML = `
+                    <div>${displayName}</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">
+                        ${isActive ? '✅ 활성' : '❌ 비활성'}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // 기능 함수들
+        function loadAvailableResolutions() {
+            fetch('/api/resolutions')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('resolutionSelect');
+                    select.innerHTML = '';
+
+                    data.forEach(resolution => {
+                        const option = document.createElement('option');
+                        option.value = resolution.value;
+                        option.textContent = resolution.label;
+                        select.appendChild(option);
+                    });
+
+                    console.log(`✅ ${data.length}개 해상도 로드됨`);
+                })
+                .catch(error => {
+                    console.error('해상도 로드 실패:', error);
+                    const select = document.getElementById('resolutionSelect');
+                    select.innerHTML = '<option value="">로드 실패</option>';
+                });
+        }
+
+        function changeResolution() {
+            const select = document.getElementById('resolutionSelect');
+            const selectedResolution = select.value;
+
+            if (!selectedResolution) {
+                alert('⚠️ 해상도를 선택해주세요.');
+                return;
+            }
+
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '📐 변경 중...';
+
+            const selectedOption = select.options[select.selectedIndex];
+            const resolutionLabel = selectedOption ? selectedOption.textContent : selectedResolution;
+
+            if (confirm(`해상도를 ${resolutionLabel}로 변경하시겠습니까?\n\n⚠️ 스트리밍이 잠시 중단됩니다.`)) {
+                fetch('/api/resolution', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resolution: selectedResolution })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert(`✅ ${data.message}`);
+                        setTimeout(() => {
+                            refreshStream();
+                        }, 1000);
+                    } else {
+                        alert('❌ 해상도 변경 실패: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('❌ 네트워크 오류: ' + error.message);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                });
+            } else {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        function refreshStream() {
+            const img = document.getElementById('videoStream');
+            const src = img.src;
+            img.src = '';
+            setTimeout(() => {
+                img.src = src + '?t=' + new Date().getTime();
+            }, 100);
+        }
+
+        // 초기화 및 주기적 업데이트
+        function startMonitoring() {
+            loadAvailableResolutions(); // 해상도 목록 로드
+            updateSystemInfo(); // 즉시 업데이트
+            updateInterval = setInterval(updateSystemInfo, 3000); // 3초마다 업데이트
+        }
+
+        function stopMonitoring() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
+        // 페이지 로드 시 시작
+        document.addEventListener('DOMContentLoaded', startMonitoring);
+
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', stopMonitoring);
+
+        // 비디오 스트림 에러 처리
+        document.getElementById('videoStream').addEventListener('error', function() {
+            console.warn('비디오 스트림 로드 실패');
+        });
+
+        console.log('🎥 Findee 카메라 모니터 초기화 완료');
+    </script>
+</body>
+</html>
