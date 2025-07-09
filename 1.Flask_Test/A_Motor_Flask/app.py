@@ -166,10 +166,14 @@ def handle_motor_control(data):
             robot.motor.turn_left(speed)
         elif direction == 'rotate-right':
             robot.motor.turn_right(speed)
-        elif direction == 'curve-left':
+        elif direction == 'forward-left':
             robot.motor.curve_left(speed, 30)  # 30도 곡선
-        elif direction == 'curve-right':
+        elif direction == 'backward-left':
+            robot.motor.curve_left(-speed, 30)  # 30도 곡선
+        elif direction == 'forward-right':
             robot.motor.curve_right(speed, 30)  # 30도 곡선
+        elif direction == 'backward-right':
+            robot.motor.curve_right(-speed, 30)  # 30도 곡선
         elif direction == 'stop':
             robot.motor.stop()
         else:
