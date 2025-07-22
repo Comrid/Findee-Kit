@@ -1,5 +1,5 @@
-from findee import Findee, crop_image, image_to_ascii
 import time
+from findee import Findee, crop_image, image_to_ascii
 
 robot = Findee()
 

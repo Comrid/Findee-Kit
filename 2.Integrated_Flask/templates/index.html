@@ -7,549 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #fff;
-            overflow-x: hidden;
-            user-select: none;
-        }
-
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            grid-template-rows: 80px 1fr;
-            grid-template-areas:
-                "header header"
-                "main sidebar";
-            height: 100vh;
-            gap: 15px;
-            padding: 15px;
-        }
-
-        /* Header */
-        .header {
-            grid-area: header;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .header h1 i {
-            margin-right: 10px;
-            color: #ffd700;
-        }
-
-        .status-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #4ade80;
-            animation: pulse 2s infinite;
-        }
-
-        .status-dot.warning {
-            background: #f59e0b;
-        }
-
-        .status-dot.error {
-            background: #ef4444;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* Main Content */
-        .main-content {
-            grid-area: main;
-            display: grid;
-            grid-template-rows: 2fr 1fr;
-            gap: 15px;
-        }
-
-        /* Camera Section */
-        .camera-container {
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .camera-feed {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #1a1a1a;
-        }
-
-        .camera-info {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            z-index: 3;
-        }
-
-        .camera-controls {
-            position: absolute;
-            bottom: 15px;
-            left: 15px;
-            right: 15px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 8px;
-            z-index: 3;
-        }
-
-        .resolution-select {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 6px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            min-width: 120px;
-        }
-
-        .resolution-select option {
-            background: #2d3748;
-            color: white;
-        }
-
-        .btn-camera {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-camera:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        /* Ultrasonic Section */
-        .ultrasonic-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .ultrasonic-display {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .distance-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .distance-value {
-            font-size: 2em;
-            font-weight: 700;
-            margin: 10px 0;
-        }
-
-        .distance-normal {
-            color: #4ade80;
-        }
-
-        .distance-warning {
-            color: #f59e0b;
-        }
-
-        .distance-danger {
-            color: #ef4444;
-        }
-
-        .warning-indicator {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin: 0 auto 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .warning-close {
-            background: #ef4444;
-            animation: pulse-danger 1s infinite;
-        }
-
-        .warning-normal {
-            background: #4ade80;
-        }
-
-        .warning-far {
-            background: #f59e0b;
-        }
-
-        @keyframes pulse-danger {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .ultrasonic-chart {
-            position: relative;
-            height: 200px;
-        }
-
-        .ultrasonic-controls {
-            grid-column: 1 / -1;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            grid-area: sidebar;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        /* Motor Controls */
-        .motor-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .controls-title {
-            font-size: 18px;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .direction-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 8px;
-            max-width: 240px;
-            margin: 0 auto 20px;
-        }
-
-        .direction-btn {
-            width: 70px;
-            height: 70px;
-            border: none;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            border: 2px solid transparent;
-        }
-
-        .direction-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.05);
-        }
-
-        .direction-btn:active {
-            transform: scale(0.95);
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        .direction-btn.active {
-            background: rgba(74, 222, 128, 0.6);
-            border-color: #4ade80;
-            box-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
-        }
-
-        .direction-btn:nth-child(2) { /* Forward */
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(37, 99, 235, 0.6));
-        }
-
-        .direction-btn:nth-child(4) { /* Left */
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(147, 51, 234, 0.6));
-        }
-
-        .direction-btn:nth-child(5) { /* Stop */
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.6), rgba(220, 38, 38, 0.6));
-        }
-
-        .direction-btn:nth-child(6) { /* Right */
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.6), rgba(147, 51, 234, 0.6));
-        }
-
-        .direction-btn:nth-child(8) { /* Backward */
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.6), rgba(217, 119, 6, 0.6));
-        }
-
-        .speed-control {
-            margin-top: 15px;
-            text-align: center;
-        }
-
-        .speed-slider {
-            width: 100%;
-            margin: 10px 0;
-            -webkit-appearance: none;
-            appearance: none;
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.2);
-            outline: none;
-        }
-
-        .speed-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #4ade80;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(74, 222, 128, 0.3);
-        }
-
-        .speed-slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: #4ade80;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 2px 10px rgba(74, 222, 128, 0.3);
-        }
-
-        /* System Info */
-        .system-panel {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            flex: 1;
-        }
-
-        .system-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            font-size: 12px;
-        }
-
-        .system-item {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 8px;
-            text-align: center;
-        }
-
-        .system-item .label {
-            opacity: 0.7;
-            margin-bottom: 4px;
-        }
-
-        .system-item .value {
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #48bb78, #38a169);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #f56565, #e53e3e);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .dashboard-container {
-                grid-template-columns: 1fr;
-                grid-template-areas:
-                    "header"
-                    "main"
-                    "sidebar";
-                grid-template-rows: 80px 1fr auto;
-            }
-
-            .main-content {
-                grid-template-rows: 1fr;
-                grid-template-columns: 2fr 1fr;
-                gap: 15px;
-            }
-
-            .camera-container {
-                grid-column: 1;
-            }
-
-            .ultrasonic-container {
-                grid-column: 2;
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                flex-direction: row;
-                gap: 15px;
-            }
-
-            .motor-panel, .system-panel {
-                flex: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-container {
-                padding: 10px;
-                gap: 10px;
-            }
-
-            .main-content {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto;
-            }
-
-            .ultrasonic-container {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                flex-direction: column;
-            }
-
-            .direction-pad {
-                max-width: 200px;
-            }
-
-            .direction-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 18px;
-            }
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 15% auto;
-            padding: 20px;
-            border: none;
-            border-radius: 15px;
-            width: 300px;
-            text-align: center;
-            color: white;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Chart Container */
-        .chart-container {
-            position: relative;
-            height: 180px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
     <div class="dashboard-container">
@@ -572,14 +30,26 @@
                 <div class="status-item">
                     <span id="systemTime">--:--:--</span>
                 </div>
+                <div class="status-item">
+                    <span>CPU: <span id="cpuUsage">--%</span></span>
+                </div>
+                <div class="status-item">
+                    <span>Temp: <span id="cpuTemp">--°C</span></span>
+                </div>
+                <div class="status-item">
+                    <span>RAM: <span id="memoryUsage">--%</span></span>
+                </div>
+                <div class="status-item">
+                    <span>IP: <span id="ipAddress">--</span></span>
+                </div>
             </div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
             <!-- Camera Section -->
-            <div class="camera-container">
-                <img id="cameraFeed" class="camera-feed" src="/video_feed" alt="Camera Feed">
+            <div class="camera-container" style="top: -1px;">
+                <img id="cameraFeed" class="camera-feed" src="/video_feed" alt="Camera Feed" style="image-rendering: pixelated;">
                 <div class="camera-info">
                     <div>FPS: <span id="cameraFps">--</span></div>
                     <div>Resolution: <span id="cameraResolution">--</span></div>
@@ -591,39 +61,6 @@
                     <button class="btn-camera" onclick="applyResolution()">적용</button>
                 </div>
             </div>
-
-            <!-- Ultrasonic Section -->
-            <div class="ultrasonic-container">
-                <div class="ultrasonic-display">
-                    <div class="distance-card">
-                        <div class="warning-indicator warning-normal" id="warningIndicator">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <div>현재 거리</div>
-                        <div class="distance-value distance-normal" id="currentDistance">-- cm</div>
-                    </div>
-                    <div class="distance-card">
-                        <div>측정 간격</div>
-                        <div class="distance-value" style="color: #3b82f6;" id="intervalDisplay">1.0초</div>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="distanceChart"></canvas>
-                </div>
-                <div class="ultrasonic-controls">
-                    <button class="btn btn-success" onclick="startUltrasonicMeasurement()">
-                        <i class="fas fa-play"></i> 시작
-                    </button>
-                    <button class="btn btn-danger" onclick="stopUltrasonicMeasurement()">
-                        <i class="fas fa-stop"></i> 중지
-                    </button>
-                    <button class="btn" onclick="clearUltrasonicData()">
-                        <i class="fas fa-trash"></i> 클리어
-                    </button>
-                    <input type="range" id="intervalRange" min="0.1" max="5" step="0.1" value="1" 
-                           style="width: 100px;" onchange="updateInterval()">
-                </div>
-            </div>
         </div>
 
         <!-- Sidebar -->
@@ -632,541 +69,83 @@
             <div class="motor-panel">
                 <h3 class="controls-title"><i class="fas fa-gamepad"></i> 모터 제어</h3>
                 
+                <!-- Direction Pad -->
                 <div class="direction-pad">
-                    <div></div>
-                    <button class="direction-btn" data-direction="forward" data-key="ArrowUp">
-                        <i class="fas fa-arrow-up"></i>
-                    </button>
-                    <div></div>
-                    <button class="direction-btn" data-direction="rotate-left" data-key="ArrowLeft">
-                        <i class="fas fa-undo-alt"></i>
-                    </button>
-                    <button class="direction-btn" data-direction="stop" data-key="Space">
-                        <i class="fas fa-stop"></i>
-                    </button>
-                    <button class="direction-btn" data-direction="rotate-right" data-key="ArrowRight">
-                        <i class="fas fa-redo-alt"></i>
-                    </button>
-                    <div></div>
-                    <button class="direction-btn" data-direction="backward" data-key="ArrowDown">
-                        <i class="fas fa-arrow-down"></i>
-                    </button>
-                    <div></div>
+                    <button class="direction-btn btn-forward-left" data-direction="forward-left" title="전진+좌회전">↖</button>
+                    <button class="direction-btn btn-forward" data-direction="forward" title="전진">↑</button>
+                    <button class="direction-btn btn-forward-right" data-direction="forward-right" title="전진+우회전">↗</button>
+
+                    <button class="direction-btn btn-rotate-left" data-direction="rotate-left" title="제자리 좌회전">↺</button>
+                    <button class="direction-btn btn-stop" data-direction="stop" title="정지">⏹</button>
+                    <button class="direction-btn btn-rotate-right" data-direction="rotate-right" title="제자리 우회전">↻</button>
+
+                    <button class="direction-btn btn-backward-left" data-direction="backward-left" title="후진+좌회전">↙</button>
+                    <button class="direction-btn btn-backward" data-direction="backward" title="후진">↓</button>
+                    <button class="direction-btn btn-backward-right" data-direction="backward-right" title="후진+우회전">↘</button>
                 </div>
 
+                <!-- Speed Control -->
                 <div class="speed-control">
-                    <label>속도: <span id="speedValue">60</span>%</label>
-                    <input type="range" id="speedSlider" class="speed-slider" 
-                           min="20" max="100" value="60" step="5">
+                    <label class="speed-label">속도 조절</label>
+                    <input type="range" class="speed-slider" id="speedSlider" min="20" max="100" value="60">
+                    <div class="speed-value" id="speedValue">60%</div>
+                    <div class="speed-range">
+                        <span>20%</span>
+                        <span>100%</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- System Info Panel -->
-            <div class="system-panel">
-                <h3 class="controls-title"><i class="fas fa-info-circle"></i> 시스템 정보</h3>
+            <!-- Ultrasonic Section -->
+            <div class="ultrasonic-panel">
+                <h3 class="controls-title"><i class="fas fa-ruler"></i> 초음파 센서</h3>
                 
-                <div class="system-grid">
-                    <div class="system-item">
-                        <div class="label">CPU</div>
-                        <div class="value" id="cpuUsage">--%</div>
+                <div class="ultrasonic-display">
+                    <div class="distance-card">
+                        <div>현재 거리</div>
+                        <div class="distance-value" id="currentDistance">-- cm</div>
                     </div>
-                    <div class="system-item">
-                        <div class="label">온도</div>
-                        <div class="value" id="cpuTemp">--°C</div>
+                    <div class="distance-card">
+                        <div>측정 간격</div>
+                        <div class="distance-value" style="color: #3b82f6;" id="intervalDisplay">1.0초</div>
                     </div>
-                    <div class="system-item">
-                        <div class="label">메모리</div>
-                        <div class="value" id="memoryUsage">--%</div>
                     </div>
-                    <div class="system-item">
-                        <div class="label">IP</div>
-                        <div class="value" id="ipAddress">--</div>
+                
+                <div class="interval-control">
+                    <label class="interval-label">간격: <span id="intervalValue">1.0초</span></label>
+                    <input type="range" id="intervalRange" min="0.1" max="5" step="0.1" value="1" 
+                           class="interval-slider" onchange="updateInterval()">
                     </div>
+                
+                <div class="ultrasonic-controls">
+                    <button class="btn btn-success" id="ultrasonicToggleBtn" onclick="toggleUltrasonicMeasurement()">
+                        <i class="fas fa-play"></i> 시작
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal -->
-    <div id="messageModal" class="modal">
-        <div class="modal-content">
-            <h4 id="modalTitle">알림</h4>
-            <p id="modalMessage"></p>
-            <button class="btn btn-primary" onclick="closeModal()">확인</button>
-        </div>
-    </div>
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
 
+    <!-- Flask 정적 파일 서빙 기능 사용  -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+    <!-- CSS 정적 / url_for() 파일 경로 변경 -->
     <script>
-        // 전역 변수
-        let socket;
-        let currentSpeed = 60;
-        let isConnected = false;
-        let activeDirection = null;
-        let distanceChart;
-        let chartData = [];
-        let ultrasonicRunning = false;
-
-        // 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeSocket();
-            initializeControls();
-            initializeChart();
-            loadResolutions();
-            startSystemInfoUpdates();
-            updateTime();
-            setInterval(updateTime, 1000);
-        });
-
-        // Socket.IO 초기화
-        function initializeSocket() {
-            socket = io();
-
-            socket.on('connect', function() {
-                console.log('Connected to server');
-                isConnected = true;
-                showMessage('연결됨', '서버에 연결되었습니다.');
-            });
-
-            socket.on('disconnect', function() {
-                console.log('Disconnected from server');
-                isConnected = false;
-                showMessage('연결 끊김', '서버와의 연결이 끊어졌습니다.');
-                resetActiveDirection();
-            });
-
-            socket.on('robot_status', function(data) {
-                updateRobotStatus(data);
-            });
-
-            socket.on('motor_feedback', function(data) {
-                handleMotorFeedback(data);
-            });
-
-            socket.on('ultrasonic_data', function(data) {
-                updateUltrasonicData(data);
-            });
+        function isFlaskEnvironment() {
+            return window.location.protocol === 'http:' || window.location.protocol === 'https:';
         }
 
-        // 컨트롤 초기화
-        function initializeControls() {
-            // 방향 패드 버튼 이벤트
-            document.querySelectorAll('.direction-btn').forEach(btn => {
-                btn.addEventListener('mousedown', function() {
-                    const direction = this.dataset.direction;
-                    sendMotorCommand(direction, currentSpeed);
-                });
-
-                btn.addEventListener('mouseup', function() {
-                    if (this.dataset.direction !== 'stop') {
-                        sendMotorCommand('stop', 0);
-                    }
-                });
-
-                btn.addEventListener('mouseleave', function() {
-                    if (this.dataset.direction !== 'stop') {
-                        sendMotorCommand('stop', 0);
-                    }
-                });
-            });
-
-            // 속도 슬라이더
-            document.getElementById('speedSlider').addEventListener('input', function() {
-                currentSpeed = parseInt(this.value);
-                document.getElementById('speedValue').textContent = currentSpeed;
-            });
-
-            // 키보드 이벤트
-            document.addEventListener('keydown', handleKeyDown);
-            document.addEventListener('keyup', handleKeyUp);
-        }
-
-        // 차트 초기화
-        function initializeChart() {
-            const ctx = document.getElementById('distanceChart').getContext('2d');
-            distanceChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: '거리 (cm)',
-                        data: [],
-                        borderColor: '#4ade80',
-                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        x: {
-                            display: false
-                        },
-                        y: {
-                            beginAtZero: true,
-                            max: 200,
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    },
-                    elements: {
-                        point: {
-                            radius: 0
-                        }
-                    }
-                }
-            });
-        }
-
-        // 모터 명령 전송
-        function sendMotorCommand(direction, speed) {
-            if (!isConnected) {
-                showMessage('오류', '서버에 연결되지 않았습니다.');
-                return;
+        if (isFlaskEnvironment()) {
+            // CSS 파일 경로 변경
+            const cssLink = document.querySelector('link[href="../static/css/style.css"]');
+            if (cssLink) {
+                cssLink.href = '/static/css/style.css';
             }
-
-            socket.emit('motor_control', {
-                direction: direction,
-                speed: speed
-            });
-
-            updateActiveDirection(direction);
-        }
-
-        // 활성 방향 업데이트
-        function updateActiveDirection(direction) {
-            // 모든 버튼에서 active 클래스 제거
-            document.querySelectorAll('.direction-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // 현재 방향 버튼에 active 클래스 추가
-            if (direction !== 'stop') {
-                const activeBtn = document.querySelector(`[data-direction="${direction}"]`);
-                if (activeBtn) {
-                    activeBtn.classList.add('active');
-                }
-            }
-
-            activeDirection = direction === 'stop' ? null : direction;
-        }
-
-        // 활성 방향 리셋
-        function resetActiveDirection() {
-            document.querySelectorAll('.direction-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            activeDirection = null;
-        }
-
-        // 모터 피드백 처리
-        function handleMotorFeedback(data) {
-            if (!data.success) {
-                showMessage('모터 오류', data.error || '명령 실행에 실패했습니다.');
-                resetActiveDirection();
-            }
-        }
-
-        // 키보드 이벤트 처리
-        function handleKeyDown(event) {
-            if (event.repeat) return;
-
-            const keyMap = {
-                'ArrowUp': 'forward',
-                'ArrowDown': 'backward',
-                'ArrowLeft': 'rotate-left',
-                'ArrowRight': 'rotate-right',
-                ' ': 'stop',
-                'Space': 'stop'
-            };
-
-            const direction = keyMap[event.code] || keyMap[event.key];
-            if (direction && direction !== activeDirection) {
-                event.preventDefault();
-                sendMotorCommand(direction, currentSpeed);
-            }
-        }
-
-        function handleKeyUp(event) {
-            const keyMap = {
-                'ArrowUp': 'forward',
-                'ArrowDown': 'backward',
-                'ArrowLeft': 'rotate-left',
-                'ArrowRight': 'rotate-right'
-            };
-
-            const direction = keyMap[event.code] || keyMap[event.key];
-            if (direction === activeDirection) {
-                event.preventDefault();
-                sendMotorCommand('stop', 0);
-            }
-        }
-
-        // 로봇 상태 업데이트
-        function updateRobotStatus(data) {
-            const motorStatus = document.getElementById('motorStatus');
-            const cameraStatus = document.getElementById('cameraStatus');
-            const ultrasonicStatus = document.getElementById('ultrasonicStatus');
-
-            // 상태 점 업데이트
-            updateStatusDot(motorStatus, data.motor_available);
-            updateStatusDot(cameraStatus, data.camera_available);
-            updateStatusDot(ultrasonicStatus, data.ultrasonic_available);
-        }
-
-        function updateStatusDot(element, isAvailable) {
-            element.className = 'status-dot';
-            if (isAvailable) {
-                element.classList.add('status-dot');
-            } else {
-                element.classList.add('error');
-            }
-        }
-
-        // 해상도 목록 로드
-        async function loadResolutions() {
-            try {
-                const response = await fetch('/api/resolutions');
-                const data = await response.json();
-                
-                if (data.resolutions) {
-                    const select = document.getElementById('resolutionSelect');
-                    select.innerHTML = '<option value="">해상도 선택...</option>';
-                    
-                    data.resolutions.forEach(resolution => {
-                        const option = document.createElement('option');
-                        option.value = resolution;
-                        option.textContent = resolution;
-                        if (resolution === data.current) {
-                            option.selected = true;
-                        }
-                        select.appendChild(option);
-                    });
-                    
-                    document.getElementById('cameraResolution').textContent = data.current || 'N/A';
-                }
-            } catch (error) {
-                console.error('해상도 로드 실패:', error);
-            }
-        }
-
-        // 해상도 적용
-        async function applyResolution() {
-            const select = document.getElementById('resolutionSelect');
-            const resolution = select.value;
-            
-            if (!resolution) {
-                showMessage('오류', '해상도를 선택해주세요.');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/resolution', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ resolution: resolution })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById('cameraResolution').textContent = resolution;
-                    showMessage('성공', data.message);
-                    
-                    // 카메라 피드 새로고침
-                    setTimeout(() => {
-                        const img = document.getElementById('cameraFeed');
-                        img.src = img.src + '?' + new Date().getTime();
-                    }, 1000);
-                } else {
-                    showMessage('오류', data.message || '해상도 변경에 실패했습니다.');
-                }
-            } catch (error) {
-                showMessage('오류', '해상도 변경 중 오류가 발생했습니다.');
-            }
-        }
-
-        // 초음파 센서 측정 시작
-        async function startUltrasonicMeasurement() {
-            try {
-                const response = await fetch('/api/ultrasonic/start', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    ultrasonicRunning = true;
-                    showMessage('시작됨', '초음파 센서 측정이 시작되었습니다.');
-                } else {
-                    showMessage('오류', data.message || '측정 시작에 실패했습니다.');
-                }
-            } catch (error) {
-                showMessage('오류', '측정 시작 중 오류가 발생했습니다.');
-            }
-        }
-
-        // 초음파 센서 측정 중지
-        async function stopUltrasonicMeasurement() {
-            try {
-                const response = await fetch('/api/ultrasonic/stop', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    ultrasonicRunning = false;
-                    showMessage('중지됨', '초음파 센서 측정이 중지되었습니다.');
-                } else {
-                    showMessage('오류', data.message || '측정 중지에 실패했습니다.');
-                }
-            } catch (error) {
-                showMessage('오류', '측정 중지 중 오류가 발생했습니다.');
-            }
-        }
-
-        // 초음파 센서 데이터 클리어
-        async function clearUltrasonicData() {
-            try {
-                const response = await fetch('/api/ultrasonic/clear', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    chartData = [];
-                    distanceChart.data.labels = [];
-                    distanceChart.data.datasets[0].data = [];
-                    distanceChart.update();
-                    document.getElementById('currentDistance').textContent = '-- cm';
-                    showMessage('클리어됨', '데이터가 초기화되었습니다.');
-                } else {
-                    showMessage('오류', data.message || '데이터 초기화에 실패했습니다.');
-                }
-            } catch (error) {
-                showMessage('오류', '데이터 초기화 중 오류가 발생했습니다.');
-            }
-        }
-
-        // 측정 간격 업데이트
-        async function updateInterval() {
-            const interval = document.getElementById('intervalRange').value;
-            document.getElementById('intervalDisplay').textContent = interval + '초';
-            
-            try {
-                await fetch('/api/ultrasonic/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ interval: parseFloat(interval) })
-                });
-            } catch (error) {
-                console.error('간격 설정 실패:', error);
-            }
-        }
-
-        // 초음파 데이터 업데이트
-        function updateUltrasonicData(data) {
-            // 현재 거리 표시
-            document.getElementById('currentDistance').textContent = data.distance + ' cm';
-            
-            // 상태에 따른 색상 변경
-            const distanceElement = document.getElementById('currentDistance');
-            const indicatorElement = document.getElementById('warningIndicator');
-            
-            distanceElement.className = 'distance-value';
-            indicatorElement.className = 'warning-indicator';
-            
-            if (data.status === 'close') {
-                distanceElement.classList.add('distance-danger');
-                indicatorElement.classList.add('warning-close');
-                indicatorElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-            } else if (data.status === 'far') {
-                distanceElement.classList.add('distance-warning');
-                indicatorElement.classList.add('warning-far');
-                indicatorElement.innerHTML = '<i class="fas fa-search"></i>';
-            } else {
-                distanceElement.classList.add('distance-normal');
-                indicatorElement.classList.add('warning-normal');
-                indicatorElement.innerHTML = '<i class="fas fa-shield-alt"></i>';
-            }
-            
-            // 차트 데이터 업데이트
-            chartData.push(data);
-            if (chartData.length > 20) {
-                chartData.shift();
-            }
-            
-            distanceChart.data.labels = chartData.map(d => d.timestamp);
-            distanceChart.data.datasets[0].data = chartData.map(d => d.distance);
-            distanceChart.update('none');
-        }
-
-        // 시스템 정보 업데이트
-        async function updateSystemInfo() {
-            try {
-                const response = await fetch('/api/system_info');
-                const data = await response.json();
-                
-                if (data) {
-                    document.getElementById('cpuUsage').textContent = (data.cpu_usage || 0).toFixed(1) + '%';
-                    document.getElementById('cpuTemp').textContent = (data.cpu_temp || 0).toFixed(1) + '°C';
-                    document.getElementById('memoryUsage').textContent = (data.memory_usage || 0).toFixed(1) + '%';
-                    document.getElementById('ipAddress').textContent = data.ip_address || '--';
-                    document.getElementById('cameraFps').textContent = data.camera_fps || '--';
-                }
-            } catch (error) {
-                console.error('시스템 정보 업데이트 실패:', error);
-            }
-        }
-
-        // 시스템 정보 업데이트 시작
-        function startSystemInfoUpdates() {
-            updateSystemInfo();
-            setInterval(updateSystemInfo, 3000);
-        }
-
-        // 시간 업데이트
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString();
-            document.getElementById('systemTime').textContent = timeString;
-        }
-
-        // 메시지 모달 표시
-        function showMessage(title, message) {
-            document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalMessage').textContent = message;
-            document.getElementById('messageModal').style.display = 'block';
-        }
-
-        // 모달 닫기
-        function closeModal() {
-            document.getElementById('messageModal').style.display = 'none';
-        }
-
-        // 모달 외부 클릭 시 닫기
-        window.onclick = function(event) {
-            const modal = document.getElementById('messageModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
+            // 콘솔 로그
+            console.log('🔧 CSS File Reloaded for Flask');
         }
     </script>
 </body>

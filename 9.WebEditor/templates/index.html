@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Findee Web Code Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-code"></i> Findee Web Code Editor</h1>
+            <div class="status-info">
+                <div class="status-item">
+                    <div class="status-dot" id="connectionStatus"></div>
+                    <span id="connectionText">Connecting...</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="motorStatus"></div>
+                    <span>Motor</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="cameraStatus"></div>
+                    <span>Camera</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" id="ultrasonicStatus"></div>
+                    <span>Ultrasonic</span>
+                </div>
+                <div class="status-item">
+                    <span id="systemTime">--:--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Code Editor Section -->
+            <div class="editor-section">
+                <div class="editor-header">
+                    <div class="file-controls">
+                        <select id="fileSelect" class="file-select">
+                            <option value="">파일 선택...</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="loadFile()">
+                            <i class="fas fa-folder-open"></i> 로드
+                        </button>
+                        <button class="btn btn-secondary" onclick="saveFile()">
+                            <i class="fas fa-save"></i> 저장
+                        </button>
+                        <button class="btn btn-secondary" onclick="newFile()">
+                            <i class="fas fa-file"></i> 새 파일
+                        </button>
+                    </div>
+                    <div class="execution-controls">
+                        <button class="btn btn-success" id="runBtn" onclick="runCode()">
+                            <i class="fas fa-play"></i> 실행
+                        </button>
+                        <button class="btn btn-danger" id="stopBtn" onclick="stopCode()" disabled>
+                            <i class="fas fa-stop"></i> 중지
+                        </button>
+                        <button class="btn btn-warning" onclick="clearOutput()">
+                            <i class="fas fa-trash"></i> 출력 클리어
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="editor-wrapper" style="left: -7px; top: 10px;">
+                    <div id="monacoEditor" class="monaco-editor"></div>
+                </div>
+                
+                <div class="output-panel">
+                    <div class="output-header">
+                        <h4><i class="fas fa-terminal"></i> 실행 결과</h4>
+                        <div class="output-status" id="outputStatus">대기 중...</div>
+                    </div>
+                    <div class="output-content" id="outputContent">
+                        <div class="output-item system">🚀 Findee Web Code Editor가 준비되었습니다.</div>
+                        <div class="output-item system">💡 사용 가능한 객체: robot, motor, camera, ultrasonic, time</div>
+                        <div class="output-item system">📝 예제 코드를 작성하고 실행해보세요!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Camera and Control Section -->
+            <div class="camera-control-section">
+                <!-- Camera Section -->
+                <div class="camera-section">
+                    <div class="camera-container">
+                        <img id="cameraFeed" class="camera-feed" src="/video_feed" alt="Camera Feed" style="image-rendering: pixelated;">
+                        <div class="camera-info">
+                            <div>FPS: <span id="cameraFps">--</span></div>
+                            <div>Resolution: <span id="cameraResolution">--</span></div>
+                        </div>
+                        <div class="camera-controls">
+                            <select id="resolutionSelect" class="resolution-select">
+                                <option value="">해상도 선택...</option>
+                            </select>
+                            <button class="btn-camera" onclick="applyCameraResolution()">적용</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Panels Section -->
+                <div class="control-panels-section">
+                    <!-- Motor Control Panel -->
+                    <div class="motor-panel">
+                        <h3 class="controls-title"><i class="fas fa-gamepad"></i> 모터 제어</h3>
+                        
+                        <!-- Direction Pad -->
+                        <div class="direction-pad">
+                            <button class="direction-btn btn-forward-left" data-direction="forward-left" title="전진+좌회전">↖</button>
+                            <button class="direction-btn btn-forward" data-direction="forward" title="전진">↑</button>
+                            <button class="direction-btn btn-forward-right" data-direction="forward-right" title="전진+우회전">↗</button>
+
+                            <button class="direction-btn btn-rotate-left" data-direction="rotate-left" title="제자리 좌회전">↺</button>
+                            <button class="direction-btn btn-stop" data-direction="stop" title="정지">⏹</button>
+                            <button class="direction-btn btn-rotate-right" data-direction="rotate-right" title="제자리 우회전">↻</button>
+
+                            <button class="direction-btn btn-backward-left" data-direction="backward-left" title="후진+좌회전">↙</button>
+                            <button class="direction-btn btn-backward" data-direction="backward" title="후진">↓</button>
+                            <button class="direction-btn btn-backward-right" data-direction="backward-right" title="후진+우회전">↘</button>
+                        </div>
+
+                        <!-- Speed Control -->
+                        <div class="speed-control">
+                            <label class="speed-label">속도 조절</label>
+                            <input type="range" class="speed-slider" id="speedSlider" min="20" max="100" value="60">
+                            <div class="speed-range">
+                                <span>20%</span>
+                                <div class="speed-value" id="speedValue">60%</div>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <!-- Motor Status Display -->
+                        <div class="motor-status-display">
+                            <div class="status-label">현재 명령</div>
+                            <div class="status-value" id="motorStatusValue">명령 없음</div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Ultrasonic + System Info -->
+                    <div class="right-panels-column">
+                        <!-- Ultrasonic Panel -->
+                        <div class="ultrasonic-panel">
+                            <h3 class="controls-title"><i class="fas fa-ruler"></i> 초음파 센서</h3>
+                            
+                            <div class="ultrasonic-display">
+                                <div class="distance-card">
+                                    <div>현재 거리</div>
+                                    <div class="distance-value" id="currentDistance">-- cm</div>
+                                </div>
+                                <div class="distance-card">
+                                    <div>측정 간격</div>
+                                    <div class="distance-value" style="color: #3b82f6;" id="intervalDisplay">1.0초</div>
+                                </div>
+                            </div>
+                            
+                            <div class="ultrasonic-controls">
+                                <button class="btn btn-success" id="ultrasonicToggleBtn" onclick="toggleUltrasonicMeasurement()">
+                                    <i class="fas fa-play"></i> 시작
+                                </button>
+                                <input type="range" id="intervalRange" min="0.1" max="5" step="0.1" value="1" 
+                                       class="interval-slider" onchange="updateInterval()">
+                            </div>
+                        </div>
+
+                        <!-- System Info Panel -->
+                        <div class="system-panel">
+                            <h3 class="controls-title"><i class="fas fa-info-circle"></i> 시스템 정보</h3>
+                            
+                            <div class="system-grid">
+                                <div class="system-item">
+                                    <div class="label">CPU</div>
+                                    <div class="value" id="cpuUsage">--%</div>
+                                </div>
+                                <div class="system-item">
+                                    <div class="label">온도</div>
+                                    <div class="value" id="cpuTemp">--°C</div>
+                                </div>
+                                <div class="system-item">
+                                    <div class="label">메모리</div>
+                                    <div class="value" id="memoryUsage">--%</div>
+                                </div>
+                                <div class="system-item">
+                                    <div class="label">IP</div>
+                                    <div class="value" id="ipAddress">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Code Examples Panel -->
+            <div class="examples-panel">
+                <h3 class="controls-title"><i class="fas fa-lightbulb"></i> 코드 예제</h3>
+                
+                <div class="example-buttons">
+                    <button class="btn btn-example" onclick="loadExample('basic_usage')">
+                        <i class="fas fa-play"></i> 기본 사용법
+                    </button>
+                    <button class="btn btn-example" onclick="loadExample('variable_names')">
+                        <i class="fas fa-tags"></i> 변수명 예제
+                    </button>
+                    <button class="btn btn-example" onclick="loadExample('motor_test')">
+                        <i class="fas fa-cog"></i> 모터 테스트
+                    </button>
+                    <button class="btn btn-example" onclick="loadExample('ultrasonic_test')">
+                        <i class="fas fa-ruler"></i> 초음파 테스트
+                    </button>
+                    <button class="btn btn-example" onclick="loadExample('camera_test')">
+                        <i class="fas fa-camera"></i> 카메라 테스트
+                    </button>
+                    <button class="btn btn-example" onclick="loadExample('autonomous')">
+                        <i class="fas fa-robot"></i> 자율 주행
+                    </button>
+                    <button class="btn btn-example" onclick="loadExample('infinite_loop')">
+                        <i class="fas fa-infinity"></i> 무한루프 예제
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- JavaScript 모듈들 로드 -->
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/socket-handlers.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/robot-controls.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/file-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/monaco-config.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+
+    <!-- CSS 정적 / url_for() 파일 경로 변경 -->
+    <script>
+        function isFlaskEnvironment() {
+            return window.location.protocol === 'http:' || window.location.protocol === 'https:';
+        }
+
+        if (isFlaskEnvironment()) {
+            // CSS 파일 경로 변경
+            const cssLink = document.querySelector('link[href="../static/css/style.css"]');
+            if (cssLink) {
+                cssLink.href = '/static/css/style.css';
+            }
+            // 콘솔 로그
+            console.log('🔧 CSS File Reloaded for Flask');
+        }
+    </script>
+</body>
+</html>

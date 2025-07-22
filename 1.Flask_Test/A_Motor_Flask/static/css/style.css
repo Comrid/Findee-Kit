@@ -1,0 +1,423 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    grid-template-rows: 80px 1fr 80px;
+    grid-template-areas:
+        "header header"
+        "camera controls"
+        "footer footer";
+    height: 100vh;
+    gap: 15px;
+    padding: 15px;
+}
+
+/* Header */
+.header {
+    grid-area: header;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.status-info {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.warning {
+    background: #f59e0b;
+}
+
+.status-dot.error {
+    background: #ef4444;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Camera Area */
+.camera-container {
+    grid-area: camera;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #1a1a1a;
+    position: relative;
+}
+
+.camera-info {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    z-index: 3;
+}
+
+/* Controls Panel */
+.controls-panel {
+    grid-area: controls;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    overflow-y: auto;
+}
+
+.controls-title {
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* Robot Status */
+.robot-status {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.status-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+}
+
+.status-card .label {
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.status-card .value {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Direction Pad */
+.direction-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+    max-width: 240px;
+    margin: 0 auto;
+}
+
+.direction-btn {
+    width: 70px;
+    height: 70px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border: 2px solid transparent;
+}
+
+.direction-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.direction-btn:active,
+.direction-btn.active {
+    background: rgba(74, 222, 128, 0.6);
+    border-color: #4ade80;
+    transform: scale(0.95);
+}
+
+.direction-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Button positions */
+.btn-forward-left { grid-column: 1; grid-row: 1; }
+.btn-forward { grid-column: 2; grid-row: 1; }
+.btn-forward-right { grid-column: 3; grid-row: 1; }
+.btn-rotate-left { grid-column: 1; grid-row: 2; }
+.btn-stop { grid-column: 2; grid-row: 2; background: rgba(239, 68, 68, 0.6); }
+.btn-rotate-right { grid-column: 3; grid-row: 2; }
+.btn-backward-left { grid-column: 1; grid-row: 3; }
+.btn-backward { grid-column: 2; grid-row: 3; }
+.btn-backward-right { grid-column: 3; grid-row: 3; }
+
+.btn-stop:hover {
+    background: rgba(239, 68, 68, 0.8);
+}
+
+/* Speed Control */
+.speed-control {
+    text-align: center;
+}
+
+.speed-label {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.speed-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.speed-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #4ade80;
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.speed-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #4ade80;
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.speed-value {
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #4ade80;
+}
+
+.speed-range {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Log Panel */
+.log-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.log-header h4 {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.log-clear-btn {
+    background: rgba(239, 68, 68, 0.6);
+    border: none;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.log-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.8);
+}
+
+.log-content {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 300px;
+    min-height: 250px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.log-item {
+    margin-bottom: 4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    word-wrap: break-word;
+}
+
+.log-item.system {
+    background: rgba(59, 130, 246, 0.2);
+    border-left: 3px solid #3b82f6;
+}
+
+.log-item.command {
+    background: rgba(34, 197, 94, 0.2);
+    border-left: 3px solid #22c55e;
+}
+
+.log-item.warning {
+    background: rgba(245, 158, 11, 0.2);
+    border-left: 3px solid #f59e0b;
+}
+
+.log-item.error {
+    background: rgba(239, 68, 68, 0.2);
+    border-left: 3px solid #ef4444;
+}
+
+.log-timestamp {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 9px;
+}
+
+/* Footer */
+.footer {
+    grid-area: footer;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 25px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.keyboard-hints {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hint-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.key {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: 60px 1fr 350px 80px;
+        grid-template-areas:
+            "header"
+            "camera"
+            "controls"
+            "footer";
+    }
+
+    .direction-pad {
+        max-width: 200px;
+    }
+
+    .direction-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 18px;
+    }
+
+    .log-content {
+        max-height: 200px;
+        min-height: 150px;
+    }
+} 

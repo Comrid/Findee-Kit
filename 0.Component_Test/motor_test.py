@@ -1,3 +1,6 @@
+from findee import Findee, FindeeFormatter
+
+
 from findee import Findee
 import time
 
