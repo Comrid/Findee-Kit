@@ -1,0 +1,176 @@
+/*
+ * CONTENTS
+ * ========
+ * Widget Content Styles
+ * Text Widget
+ * Image Widget
+ * Button Widget
+ * Chart Widget
+ * Gauge Widget
+ * Log Widget
+ */
+
+/* Widget Content Styles */
+.widget-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.widget-content .widget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.widget-content .widget-header h4 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    margin: 0;
+}
+
+.widget-content .widget-header h4 i {
+    margin-right: 6px;
+    color: #ffd700;
+}
+
+.widget-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #a0aec0;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.widget-body {
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Text Widget */
+.text-widget .text-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #4ade80;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.text-widget .text-label {
+    font-size: 14px;
+    color: #a0aec0;
+    text-align: center;
+}
+
+/* Image Widget */
+.image-widget .widget-image {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    image-rendering: pixelated;
+}
+
+.image-widget .image-info {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+/* Button Widget */
+.button-widget .widget-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.button-widget .widget-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.button-widget .widget-btn:active {
+    transform: translateY(0);
+}
+
+/* Chart Widget */
+.chart-widget .chart-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+}
+
+/* Gauge Widget */
+.gauge-widget .gauge-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.gauge-widget .gauge {
+    text-align: center;
+}
+
+.gauge-widget .gauge-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #4ade80;
+    margin-bottom: 8px;
+}
+
+.gauge-widget .gauge-label {
+    font-size: 14px;
+    color: #a0aec0;
+}
+
+/* Log Widget */
+.log-widget .log-content {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.log-widget .log-entry {
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
